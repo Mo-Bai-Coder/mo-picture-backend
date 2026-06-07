@@ -1,0 +1,14 @@
+# IDEA
+.idea/
+*.iml
+
+# 编译输出
+target/
+build/
+out/
+
+# 系统文件
+.DS_Store
+
+# 配置文件（敏感信息）
+src/main/resources/application.yml
