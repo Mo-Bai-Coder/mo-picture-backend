@@ -13,7 +13,7 @@ public class DeleteRequest implements Serializable {
     private static final long serialVersionUID = 7784861674331221515L;
 
     /**
-     *  id
+     * id
      */
     private long id;
 }

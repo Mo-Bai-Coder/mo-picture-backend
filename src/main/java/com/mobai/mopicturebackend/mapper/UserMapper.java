@@ -1,7 +1,7 @@
 package com.mobai.mopicturebackend.mapper;
 
-import com.mobai.mopicturebackend.model.entity.PictureUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.mobai.mopicturebackend.model.entity.UserEntity;
 
 /**
 * @author MoBai
@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2026-06-07 23:01:15
 * @Entity com.mobai.mopicturebackend.model.entity.PictureUser
 */
-public interface PictureUserMapper extends BaseMapper<PictureUser> {
+public interface UserMapper extends BaseMapper<UserEntity> {
 
 }
 

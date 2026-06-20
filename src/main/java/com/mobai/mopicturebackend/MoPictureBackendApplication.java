@@ -12,6 +12,7 @@ public class MoPictureBackendApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MoPictureBackendApplication.class, args);
+        System.out.println("智能云图库项目已启动");
     }
 
 }

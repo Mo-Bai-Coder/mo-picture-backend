@@ -18,6 +18,20 @@ public class BaseResponseModel<T> implements Serializable {
     public BaseResponseModel() {
     }
 
+    public BaseResponseModel(String code, T data, String message) {
+        this.responseCode = code;
+        this.data = data;
+        this.responseMessage = message;
+    }
+
+    public BaseResponseModel(String code, T data) {
+        this(code, data, "");
+    }
+
+    public BaseResponseModel(ResCodeEnum resCodeEnum) {
+        this(resCodeEnum.getCode(), null, resCodeEnum.getMessage());
+    }
+
     public static <T> BaseResponseModel<T> success(T data) {
         BaseResponseModel<T> baseResponseModel = new BaseResponseModel<T>();
         baseResponseModel.setResponseCode(ResCodeEnum.SUCCESS.getCode());
@@ -35,19 +49,5 @@ public class BaseResponseModel<T> implements Serializable {
 
     public static <T> BaseResponseModel<T> error(BusinessException ex) {
         return new BaseResponseModel(ex.getCode(), (Object) null, ex.getMessage());
-    }
-
-    public BaseResponseModel(String code, T data, String message) {
-        this.responseCode = code;
-        this.data = data;
-        this.responseMessage = message;
-    }
-
-    public BaseResponseModel(String code, T data) {
-        this(code, data, "");
-    }
-
-    public BaseResponseModel(ResCodeEnum resCodeEnum) {
-        this(resCodeEnum.getCode(), null, resCodeEnum.getMessage());
     }
 }

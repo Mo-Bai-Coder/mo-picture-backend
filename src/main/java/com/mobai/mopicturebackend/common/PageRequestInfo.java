@@ -1,6 +1,7 @@
 package com.mobai.mopicturebackend.common;
 
 import lombok.Data;
+
 /**
  * 分页请求参数
  */
@@ -8,32 +9,22 @@ import lombok.Data;
 public class PageRequestInfo {
 
     /**
-     * 当前页
+     * 当前页号
      */
-    private int pageNum;
-
-    /***
-     * 每页的数量
-     */
-    private int pageSize;
+    private int current = 1;
 
     /**
-     * 当前页的数量
+     * 页面大小
      */
-    private int size;
+    private int pageSize = 10;
 
     /**
-     * 总页数
-     */
-    private int pages;
-
-     /**
      * 排序字段
      */
-    private String sorField;
+    private String sortField;
 
-     /**
-     * 排序顺序（默认降序）
+    /**
+     * 排序顺序（默认升序）
      */
     private String sortOrder = "descend";
 }
