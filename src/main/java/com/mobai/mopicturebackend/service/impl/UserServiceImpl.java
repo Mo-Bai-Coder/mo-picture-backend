@@ -240,6 +240,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         return queryWrapper;
     }
 
+    @Override
+    public boolean isAdmin(UserEntity user) {
+        return user != null && UserConstant.ADMIN_ROLE.equals(user.getUserRole());
+    }
+
     /**
      * 批量获取脱敏后的用户视图列表
      * 将用户实体列表转换为用户视图对象列表，过滤敏感信息
