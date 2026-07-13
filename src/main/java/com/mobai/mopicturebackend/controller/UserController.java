@@ -48,7 +48,7 @@ public class UserController {
      */
     @PostMapping("/register")
     public BaseResponseModel<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        ThrowUtils.throwIf(userRegisterRequest == null, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(userRegisterRequest == null, ResCodeEnum.PARAMS_ERROR);
 
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -67,7 +67,7 @@ public class UserController {
      */
     @PostMapping("/login")
     public BaseResponseModel<LoginUserVO> userLogin(@RequestBody UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
-        ThrowUtils.throwIf(userRegisterRequest == null, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(userRegisterRequest == null, ResCodeEnum.PARAMS_ERROR);
 
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -97,7 +97,7 @@ public class UserController {
      */
     @PostMapping("/logout")
     public BaseResponseModel<Boolean> userLogout(HttpServletRequest request) {
-        ThrowUtils.throwIf(request == null, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(request == null, ResCodeEnum.PARAMS_ERROR);
         boolean result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -113,7 +113,7 @@ public class UserController {
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<Long> addUser(@RequestBody UserAddRequest userAddRequest) {
-        ThrowUtils.throwIf(userAddRequest == null, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(userAddRequest == null, ResCodeEnum.PARAMS_ERROR);
         UserEntity user = new UserEntity();
         BeanUtil.copyProperties(userAddRequest, user);
         // 默认密码
@@ -136,7 +136,7 @@ public class UserController {
     @GetMapping("/get")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<UserEntity> getUserById(long id) {
-        ThrowUtils.throwIf(id <= 0, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(id <= 0, ResCodeEnum.PARAMS_ERROR);
         UserEntity user = userService.getById(id);
         ThrowUtils.throwIf(user == null, ResCodeEnum.NOT_FOUND_ERROR);
         return ResultUtils.success(user);
@@ -167,7 +167,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR);
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
         boolean b = userService.removeById(deleteRequest.getId());
         return ResultUtils.success(b);
@@ -184,7 +184,7 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR);
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
         UserEntity user = new UserEntity();
         BeanUtils.copyProperties(userUpdateRequest, user);
@@ -203,7 +203,7 @@ public class UserController {
     @PostMapping("/list/page/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<Page<UserInfo>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest) {
-        ThrowUtils.throwIf(userQueryRequest == null, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(userQueryRequest == null, ResCodeEnum.PARAMS_ERROR);
         long current = userQueryRequest.getCurrent();
         long pageSize = userQueryRequest.getPageSize();
         Page<UserEntity> userPage = userService.page(new Page<>(current, pageSize),

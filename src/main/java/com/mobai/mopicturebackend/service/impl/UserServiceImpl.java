@@ -52,23 +52,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 参数校验：检查是否为空、长度是否符合要求、两次密码是否一致
         if (StrUtil.hasBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "参数为空");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "账号过短");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "账号过短");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "密码过短");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "密码过短");
         }
         if (!userPassword.equals(checkPassword)) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "两次输入的密码不一致");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "两次输入的密码不一致");
         }
         // 2. 检查账户是否已存在，避免重复注册
         QueryWrapper<UserEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
         long count = this.baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "账号重复");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "账号重复");
         }
         // 3. 密码加密：使用MD5加盐值的方式加密密码
         String encryptPassword = getEncryptPassword(userPassword);
@@ -113,13 +113,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1. 参数校验：检查账号密码是否为空、长度是否符合要求
         if (StrUtil.hasBlank(userAccount, userPassword)) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "参数为空");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "账号错误");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "账号错误");
         }
         if (userPassword.length() < 8) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "密码错误");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "密码错误");
         }
 
         // 2. 密码加密后查询数据库，验证用户是否存在
@@ -130,7 +130,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         UserEntity user = this.baseMapper.selectOne(queryWrapper);
         if (user == null) {
             log.info("用户不存在");
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "用户不存在");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "用户不存在");
         }
         // 3. 将用户信息存入Session，保持登录状态
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
@@ -221,7 +221,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     @Override
     public QueryWrapper<UserEntity> getQueryWrapper(UserQueryRequest userQueryRequest) {
         if (userQueryRequest == null) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR, "请求参数为空");
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR, "请求参数为空");
         }
         Long id = userQueryRequest.getId();
         String userName = userQueryRequest.getUserName();

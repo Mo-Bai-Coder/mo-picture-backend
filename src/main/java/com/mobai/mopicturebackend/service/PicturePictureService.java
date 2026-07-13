@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.mobai.mopicturebackend.model.dto.picture.PictureQueryRequest;
+import com.mobai.mopicturebackend.model.dto.picture.PictureReviewRequest;
+import com.mobai.mopicturebackend.model.dto.picture.PictureUploadByBatchRequest;
 import com.mobai.mopicturebackend.model.dto.picture.PictureUploadRequest;
 import com.mobai.mopicturebackend.model.entity.PictureEntity;
 import com.mobai.mopicturebackend.model.entity.UserEntity;
@@ -22,7 +24,7 @@ public interface PicturePictureService extends IService<PictureEntity> {
     /**
      * 上传图片
      */
-    PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, UserEntity loginUser);
+    PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, UserEntity loginUser);
 
     /**
      * 用于将查询请求转为QueryWrapper
@@ -47,6 +49,28 @@ public interface PicturePictureService extends IService<PictureEntity> {
      */
     Page<PictureVO> getPictureVoPage(Page<PictureEntity> picturePage, HttpServletRequest request);
 
+    /**
+     * 校验图片
+     * @param picture
+     */
     void validPicture(PictureEntity picture);
+
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, UserEntity loginUser);
+
+    /**
+     * 填充审核参数
+     * @param picture
+     * @param loginUser
+     */
+    void fillReviewParams(PictureEntity picture, UserEntity loginUser) ;
+
+
+    Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest ,UserEntity loginUser);
 
 }

@@ -10,12 +10,10 @@ import com.mobai.mopicturebackend.constant.UserConstant;
 import com.mobai.mopicturebackend.exception.BusinessException;
 import com.mobai.mopicturebackend.exception.ResCodeEnum;
 import com.mobai.mopicturebackend.exception.ThrowUtils;
-import com.mobai.mopicturebackend.model.dto.picture.PictureEditRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureQueryRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureUpdateRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureUploadRequest;
+import com.mobai.mopicturebackend.model.dto.picture.*;
 import com.mobai.mopicturebackend.model.entity.PictureEntity;
 import com.mobai.mopicturebackend.model.entity.UserEntity;
+import com.mobai.mopicturebackend.model.enums.PictureReviewStatusEnum;
 import com.mobai.mopicturebackend.model.vo.PictureTagCategory;
 import com.mobai.mopicturebackend.model.vo.PictureVO;
 import com.mobai.mopicturebackend.service.PicturePictureService;
@@ -65,7 +63,7 @@ public class PictureController {
      * @return 上传成功后的图片视图对象，包含图片URL、ID等信息
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponseModel<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, HttpServletRequest request) {
         // 获取当前登录用户信息
         UserEntity loginUser = userService.getLoginUser(request);
@@ -88,7 +86,7 @@ public class PictureController {
     public BaseResponseModel<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         // 1. 校验参数是否为空
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR);
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
         // 2. 获取当前登录人信息
         UserEntity loginUser = userService.getLoginUser(request);
@@ -119,10 +117,10 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponseModel<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponseModel<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         // 1. 校验参数是否为空
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR);
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
 
         // 2. 将DTO转换为实体类
@@ -136,6 +134,8 @@ public class PictureController {
         Long id = pictureUpdateRequest.getId();
         PictureEntity oldPicture = picturePictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ResCodeEnum.NOT_FOUND_ERROR);
+        UserEntity loginUser = userService.getLoginUser(request);
+        picturePictureService.fillReviewParams(picture, loginUser);
         // 4. 执行数据库更新操作
         boolean result = picturePictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ResCodeEnum.OPERATION_ERROR);
@@ -153,7 +153,7 @@ public class PictureController {
     @GetMapping("/get/vo")
     public BaseResponseModel<PictureVO> getPictureVOById(@RequestParam Long id, HttpServletRequest request) {
         // 1. 校验参数是否合法
-        ThrowUtils.throwIf(id <= 0, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(id <= 0, ResCodeEnum.PARAMS_ERROR);
         // 2. 查询数据库，判断图片是否存在
         PictureEntity picture = picturePictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ResCodeEnum.NOT_FOUND_ERROR);
@@ -194,8 +194,9 @@ public class PictureController {
         // 1. 获取分页参数：当前页码和每页大小
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue()); // 设置审核状态为通过
         // 2. 防爬虫限制：单次查询不能超过20条
-        ThrowUtils.throwIf(size > 20, ResCodeEnum.PARAM_ERROR);
+        ThrowUtils.throwIf(size > 20, ResCodeEnum.PARAMS_ERROR);
         // 3. 构建查询条件并执行分页查询
         Page<PictureEntity> picturePage = picturePictureService.page(new Page<>(current, size),
                 picturePictureService.getQueryWrapper(pictureQueryRequest));
@@ -217,7 +218,7 @@ public class PictureController {
 
         // 1. 校验参数是否合法
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
-            throw new BusinessException(ResCodeEnum.PARAM_ERROR);
+            throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
         // 2. 将请求参数转换为实体类
         PictureEntity picture = new PictureEntity();
@@ -239,6 +240,8 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ResCodeEnum.NOT_AUTH_ERROR, "仅本人和管理者有权限编辑");
         }
+        //补充审核参数
+        picturePictureService.fillReviewParams(picture, loginUser);
         // 6. 执行数据库更新操作
         boolean result = picturePictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ResCodeEnum.OPERATION_ERROR);
@@ -262,6 +265,39 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         return ResultUtils.success(pictureTagCategory);
     }
+
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponseModel<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                      HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null, ResCodeEnum.PARAMS_ERROR);
+        UserEntity loginUser = userService.getLoginUser(request);
+        picturePictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/upload/url")
+    public BaseResponseModel<PictureVO> uploadPictureByUrl(@RequestBody PictureUploadRequest pictureUploadRequest,
+                                                      HttpServletRequest request) {
+        // 获取当前登录用户信息
+        UserEntity loginUser = userService.getLoginUser(request);
+        // 调用服务层处理图片上传逻辑
+        PictureVO pictureVO = picturePictureService.uploadPicture(pictureUploadRequest.getFileUrl(), pictureUploadRequest, loginUser);
+        return BaseResponseModel.success(pictureVO);
+    }
+
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponseModel<Integer> uploadPictureByBatch(
+            @RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            HttpServletRequest request
+    ) {
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ResCodeEnum.PARAMS_ERROR);
+        UserEntity loginUser = userService.getLoginUser(request);
+        int uploadCount = picturePictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
+    }
+
 
 
 }

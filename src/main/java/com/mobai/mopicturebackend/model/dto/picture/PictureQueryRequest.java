@@ -71,4 +71,20 @@ public class PictureQueryRequest extends PageRequestInfo {
      * 用户ID，用于查询指定用户上传的图片
      */
     private Long userId;
+
+    /**
+     * 状态：0-待审核; 1-通过; 2-拒绝
+     */
+    private Integer reviewStatus;
+
+    /**
+     * 审核信息
+     */
+    private String reviewMessage;
+
+    /**
+     * 审核人 id
+     */
+    private Long reviewerId;
+
 }
