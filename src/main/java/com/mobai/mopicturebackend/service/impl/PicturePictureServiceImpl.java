@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mobai.mopicturebackend.exception.BusinessException;
 import com.mobai.mopicturebackend.exception.ResCodeEnum;
 import com.mobai.mopicturebackend.exception.ThrowUtils;
+import com.mobai.mopicturebackend.manager.CosManager;
 import com.mobai.mopicturebackend.manager.FileManager;
 import com.mobai.mopicturebackend.manager.upload.FilePictureUpload;
 import com.mobai.mopicturebackend.manager.upload.PictureUploadTemplate;
@@ -33,12 +34,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +78,8 @@ public class PicturePictureServiceImpl extends ServiceImpl<PicturePictureMapper,
      * 用户服务，用于获取用户信息
      */
     private final UserService userService;
+    @Autowired
+    private CosManager cosManager;
 
     /**
      * 构造器注入依赖
@@ -421,6 +428,39 @@ public class PicturePictureServiceImpl extends ServiceImpl<PicturePictureMapper,
             }
         }
         return uploadCount;
+    }
+
+    @Async
+    @Override
+    public void clearPictureFile(PictureEntity oldPicture) {
+
+        String pictureUrl = oldPicture.getUrl();
+        // 判断该图片是否被多个记录使用
+        long count = this.lambdaQuery().eq(PictureEntity::getUrl,pictureUrl).count();
+
+        if (count > 1 ){
+            return ;
+        }
+
+        String picturePath = null;
+        try {
+            picturePath = new URL(pictureUrl).getPath();
+            cosManager.deleteObject(picturePath);
+
+            // 清理缩略图
+            String thumbnailUrl = oldPicture.getThumbnailUrl();
+
+            if (StrUtil.isNotBlank(thumbnailUrl)){
+                String thumbnaiPath = new URL(thumbnailUrl).getPath();
+                cosManager.deleteObject(thumbnaiPath);
+            }
+
+        } catch (MalformedURLException e) {
+            log.info("处理图片删除时遇到格式错误的URL url is :{}",pictureUrl,e);
+            throw new BusinessException(ResCodeEnum.SYSTEM_ERROR,"格式错误的URL");
+
+        }
+
     }
 
 

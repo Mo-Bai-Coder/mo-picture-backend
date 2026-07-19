@@ -68,7 +68,7 @@ public class CosManager {
         rules.add(compressRule);
 
         // 由于原图比较小，缩略图可能会比原图大，索引要加大于20kb 的限制
-        if (file.length() > 2 * 1024){
+        if (file.length() > 20 * 1024){
             //3.缩略图处理
             String thumbnaiKey = FileUtil.mainName(key)+"_thumbnail."+FileUtil.getSuffix(key);
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
@@ -84,6 +84,10 @@ public class CosManager {
         //构造处理参数
         putObjectRequest.setPicOperations(picOperations);
         return cosClient.putObject(putObjectRequest);
+    }
+
+    public void deleteObject (String key){
+        cosClient.deleteObject(cosClientConfig.getBucket(),key);
     }
 
 
