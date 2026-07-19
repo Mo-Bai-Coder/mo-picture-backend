@@ -53,13 +53,19 @@ public abstract class PictureUploadTemplate {
             // 5. 获取图片信息对象，封装返回结果
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
             ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
-            List<CIObject> list = processResults.getObjectList();
+            List<CIObject> objectList = processResults.getObjectList();
 
-            if (CollUtil.isNotEmpty(list)){
+            if (CollUtil.isNotEmpty(objectList)){
 
-                CIObject compressedCiObject = list.get(0);
+                CIObject compressedCiObject = objectList.get(0);
 
-                return buildResult(originalFilename,compressedCiObject );
+                CIObject thumbnailCiObject = compressedCiObject;
+
+                if (objectList.size() >1 ){
+                    thumbnailCiObject = objectList.get(1);
+                }
+
+                return buildResult(originalFilename,compressedCiObject ,thumbnailCiObject);
             }
 
             return buildResult(originalFilename, file, uploadPath, imageInfo);
@@ -118,7 +124,7 @@ public abstract class PictureUploadTemplate {
     /**
      * 封装返回结果
      */
-    private UploadPictureResult buildResult (String originalFilename,CIObject compressedCiObject ){
+    private UploadPictureResult buildResult (String originalFilename,CIObject compressedCiObject ,CIObject thumbnailCiObject){
         // 封装返回结果
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         int picWidth = compressedCiObject.getWidth();
@@ -138,6 +144,8 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicSize(compressedCiObject.getSize().longValue());
         // 拼接完整的图片访问URL: host + 路径
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());
+
+        uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         return uploadPictureResult;
     }
 
