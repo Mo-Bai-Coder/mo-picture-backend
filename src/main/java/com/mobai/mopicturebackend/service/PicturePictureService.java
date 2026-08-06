@@ -3,10 +3,7 @@ package com.mobai.mopicturebackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.mobai.mopicturebackend.model.dto.picture.PictureQueryRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureReviewRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.mobai.mopicturebackend.model.dto.picture.PictureUploadRequest;
+import com.mobai.mopicturebackend.model.dto.picture.*;
 import com.mobai.mopicturebackend.model.entity.PictureEntity;
 import com.mobai.mopicturebackend.model.entity.UserEntity;
 import com.mobai.mopicturebackend.model.vo.PictureVO;
@@ -75,4 +72,9 @@ public interface PicturePictureService extends IService<PictureEntity> {
 
     void clearPictureFile(PictureEntity oldPicture);
 
+    void deletePicture(long pictureId, UserEntity loginUser);
+
+    void editPicture(PictureEditRequest pictureEditRequest, UserEntity loginUser);
+
+    void checkPictureAuth(UserEntity loginUser, PictureEntity picture);
 }
