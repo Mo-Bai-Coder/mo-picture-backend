@@ -208,8 +208,8 @@ public class UserController {
         long pageSize = userQueryRequest.getPageSize();
         Page<UserEntity> userPage = userService.page(new Page<>(current, pageSize),
                 userService.getQueryWrapper(userQueryRequest));
-        Page<UserVO> userVOPage = new Page<>(current, pageSize, userPage.getTotal());
-        List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
+        Page<LoginUserVO> userVOPage = new Page<>(current, pageSize, userPage.getTotal());
+        List<LoginUserVO> userVOList = userService.getUserVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
     }

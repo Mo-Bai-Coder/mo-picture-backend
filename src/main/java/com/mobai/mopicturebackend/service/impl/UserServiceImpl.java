@@ -201,11 +201,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
      * @return 脱敏后的用户视图对象，如果用户为空则返回null
      */
     @Override
-    public UserVO getUserVO(UserEntity user) {
+    public LoginUserVO getUserVO(UserEntity user) {
         if (user == null) {
             return null;
         }
-        UserVO userVO = new UserVO();
+        LoginUserVO userVO = new LoginUserVO();
         BeanUtil.copyProperties(user, userVO);
         return userVO;
     }
@@ -253,7 +253,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
      * @return 脱敏后的用户视图对象列表，如果输入为空则返回空列表
      */
     @Override
-    public List<UserVO> getUserVOList(List<UserEntity> userList) {
+    public List<LoginUserVO> getUserVOList(List<UserEntity> userList) {
         if (CollUtil.isEmpty(userList)) {
             return new ArrayList<>();
         }
