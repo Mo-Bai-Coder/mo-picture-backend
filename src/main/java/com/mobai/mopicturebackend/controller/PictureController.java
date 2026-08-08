@@ -15,11 +15,13 @@ import com.mobai.mopicturebackend.exception.ResCodeEnum;
 import com.mobai.mopicturebackend.exception.ThrowUtils;
 import com.mobai.mopicturebackend.model.dto.picture.*;
 import com.mobai.mopicturebackend.model.entity.PictureEntity;
+import com.mobai.mopicturebackend.model.entity.SpaceEntity;
 import com.mobai.mopicturebackend.model.entity.UserEntity;
 import com.mobai.mopicturebackend.model.enums.PictureReviewStatusEnum;
 import com.mobai.mopicturebackend.model.vo.PictureTagCategory;
 import com.mobai.mopicturebackend.model.vo.PictureVO;
 import com.mobai.mopicturebackend.service.PicturePictureService;
+import com.mobai.mopicturebackend.service.PictureSpaceService;
 import com.mobai.mopicturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -74,6 +76,8 @@ public class PictureController {
     private RedisTemplate<Object, Object> redisTemplate;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private PictureSpaceService pictureSpaceService;
 
     /**
      * 上传图片（仅管理员可用）
@@ -105,29 +109,14 @@ public class PictureController {
      * @return 删除结果，true表示删除成功
      */
     @PostMapping("/delete")
-    public BaseResponseModel<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        // 1. 校验参数是否为空
+    public BaseResponseModel<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest
+            , HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
-        // 2. 获取当前登录人信息
         UserEntity loginUser = userService.getLoginUser(request);
-        // 3. 获取请求参数中的图片ID
-        long id = deleteRequest.getId();
-        // 4. 判断图片是否存在
-        PictureEntity picture = picturePictureService.getById(id);
-        ThrowUtils.throwIf(picture == null, ResCodeEnum.NOT_FOUND_ERROR);
-
-        // 5. 权限校验：仅本人和管理员可以删除
-        if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ResCodeEnum.NOT_AUTH_ERROR, "仅本人和管理者有权限删除");
-        }
-
-        // 6. 执行数据库删除操作
-        boolean result = picturePictureService.removeById(id);
-        ThrowUtils.throwIf(!result, ResCodeEnum.OPERATION_ERROR);
-        return BaseResponseModel.success(true);
-
+        picturePictureService.deletePicture(deleteRequest.getId(), loginUser);
+        return ResultUtils.success(true);
     }
 
     /**
@@ -174,15 +163,19 @@ public class PictureController {
      */
     @GetMapping("/get/vo")
     public BaseResponseModel<PictureVO> getPictureVOById(@RequestParam Long id, HttpServletRequest request) {
-        // 1. 校验参数是否合法
         ThrowUtils.throwIf(id <= 0, ResCodeEnum.PARAMS_ERROR);
-        // 2. 查询数据库，判断图片是否存在
+        // 查询数据库
         PictureEntity picture = picturePictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ResCodeEnum.NOT_FOUND_ERROR);
-        // 3. 转换为VO对象并返回
-        return BaseResponseModel.success(picturePictureService.getPictureVO(picture, request));
+        // 空间权限校验
+        Long spaceId = picture.getSpaceId();
+        if (spaceId != null) {
+            UserEntity loginUser = userService.getLoginUser(request);
+            picturePictureService.checkPictureAuth(loginUser, picture);
+        }
+        // 获取封装类
+        return ResultUtils.success(picturePictureService.getPictureVO(picture, request));
     }
-
     /**
      * 分页获取图片列表（仅管理员可用）
      * 返回原始的图片实体对象分页列表，包含所有字段信息
@@ -211,20 +204,33 @@ public class PictureController {
      * @return 图片视图对象的分页结果
      */
     @PostMapping("/list/page/vo")
-    public BaseResponseModel<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
-
-        // 1. 获取分页参数：当前页码和每页大小
+    public BaseResponseModel<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                             HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue()); // 设置审核状态为通过
-        // 2. 防爬虫限制：单次查询不能超过20条
+        // 限制爬虫
         ThrowUtils.throwIf(size > 20, ResCodeEnum.PARAMS_ERROR);
-        // 3. 构建查询条件并执行分页查询
+        // 空间权限校验
+        Long spaceId = pictureQueryRequest.getSpaceId();
+        if (spaceId == null) {
+            // 公开图库
+            // 普通用户默认只能看到审核通过的数据
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            pictureQueryRequest.setNullSpaceId(true);
+        } else {
+            // 私有空间
+            UserEntity loginUser = userService.getLoginUser(request);
+            SpaceEntity space = pictureSpaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null, ResCodeEnum.NOT_FOUND_ERROR, "空间不存在");
+            if (!loginUser.getId().equals(space.getUserId())) {
+                throw new BusinessException(ResCodeEnum.NO_AUTH_ERROR, "没有空间权限");
+            }
+        }
+        // 查询数据库
         Page<PictureEntity> picturePage = picturePictureService.page(new Page<>(current, size),
                 picturePictureService.getQueryWrapper(pictureQueryRequest));
-
-        // 4. 转换为VO对象分页结果并返回
-        return BaseResponseModel.success(picturePictureService.getPictureVoPage(picturePage, request));
+        // 获取封装类
+        return ResultUtils.success(picturePictureService.getPictureVOPage(picturePage, request));
     }
 
     /**
@@ -237,39 +243,13 @@ public class PictureController {
      */
     @PostMapping("/edit")
     public BaseResponseModel<Boolean> editPicture(@RequestBody PictureEditRequest pictureEditRequest, HttpServletRequest request) {
-
-        // 1. 校验参数是否合法
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
             throw new BusinessException(ResCodeEnum.PARAMS_ERROR);
         }
-        // 2. 将请求参数转换为实体类
-        PictureEntity picture = new PictureEntity();
-        BeanUtils.copyProperties(pictureEditRequest, picture);
-        // 2.1 注意：将tags集合转换为JSON字符串
-        picture.setTags(JSONUtil.toJsonStr(pictureEditRequest.getTags()));
-        // 3. 数据准备和校验
-        // 3.1 设置编辑时间为当前时间
-        picture.setEditTime(new Date());
-        // 3.2 执行业务规则校验
-        picturePictureService.validPicture(picture);
-
-        // 3.3 获取当前登录用户信息
         UserEntity loginUser = userService.getLoginUser(request);
-
-        // 4. 判断图片是否存在
-        PictureEntity oldPicture = picturePictureService.getById(picture.getId());
-        // 5. 权限校验：仅本人和管理员可以编辑
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ResCodeEnum.NOT_AUTH_ERROR, "仅本人和管理者有权限编辑");
-        }
-        //补充审核参数
-        picturePictureService.fillReviewParams(picture, loginUser);
-        // 6. 执行数据库更新操作
-        boolean result = picturePictureService.updateById(picture);
-        ThrowUtils.throwIf(!result, ResCodeEnum.OPERATION_ERROR);
-        return BaseResponseModel.success(true);
+        picturePictureService.editPicture(pictureEditRequest, loginUser);
+        return ResultUtils.success(true);
     }
-
 
     /**
      * 获取预置标签和分类
@@ -320,6 +300,7 @@ public class PictureController {
         return ResultUtils.success(uploadCount);
     }
 
+    @Deprecated
     @PostMapping("/list/page/vo/cache")
     public BaseResponseModel<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
 //        逻辑：

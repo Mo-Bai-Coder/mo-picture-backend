@@ -77,4 +77,6 @@ public interface PicturePictureService extends IService<PictureEntity> {
     void editPicture(PictureEditRequest pictureEditRequest, UserEntity loginUser);
 
     void checkPictureAuth(UserEntity loginUser, PictureEntity picture);
+
+    Page<PictureVO> getPictureVOPage(Page<PictureEntity> picturePage, HttpServletRequest request);
 }

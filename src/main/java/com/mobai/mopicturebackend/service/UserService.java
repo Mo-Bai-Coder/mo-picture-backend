@@ -87,7 +87,7 @@ public interface UserService extends IService<UserEntity> {
      * @param user 用户实体对象
      * @return 脱敏后的用户VO对象
      */
-    UserVO getUserVO(UserEntity user);
+    LoginUserVO getUserVO(UserEntity user);
 
     /**
      * 批量将用户实体列表转换为用户VO列表
@@ -95,7 +95,7 @@ public interface UserService extends IService<UserEntity> {
      * @param userList 用户实体列表
      * @return 脱敏后的用户VO列表
      */
-    List<UserVO> getUserVOList(List<UserEntity> userList);
+    List<LoginUserVO> getUserVOList(List<UserEntity> userList);
 
     /**
      * 根据查询请求构建MyBatis-Plus的QueryWrapper查询条件

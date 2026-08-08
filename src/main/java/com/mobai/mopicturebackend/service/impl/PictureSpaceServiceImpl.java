@@ -14,6 +14,7 @@ import com.mobai.mopicturebackend.model.dto.space.SpaceQueryRequest;
 import com.mobai.mopicturebackend.model.entity.SpaceEntity;
 import com.mobai.mopicturebackend.model.entity.UserEntity;
 import com.mobai.mopicturebackend.model.enums.SpaceLevelEnum;
+import com.mobai.mopicturebackend.model.vo.LoginUserVO;
 import com.mobai.mopicturebackend.model.vo.SpaceVO;
 import com.mobai.mopicturebackend.model.vo.UserVO;
 import com.mobai.mopicturebackend.service.PictureSpaceService;
@@ -221,7 +222,7 @@ public class PictureSpaceServiceImpl extends ServiceImpl<PictureSpaceMapper, Spa
         Long userId = space.getUserId();
         if (userId != null && userId > 0) {
             UserEntity user = userService.getById(userId);
-            UserVO userVO = userService.getUserVO(user);
+            LoginUserVO userVO = userService.getUserVO(user);
             spaceVO.setUser(userVO);
         }
         return spaceVO;

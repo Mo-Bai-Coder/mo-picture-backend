@@ -229,7 +229,7 @@ public class AuthInterceptor {
         // 将注解中要求的角色字符串转换为枚举类型
         UserRoleEnum mustUserRoleEnum = UserRoleEnum.getEnumByValue(mustRole);
         if (mustUserRoleEnum == null) {
-            throw new BusinessException(ResCodeEnum.NOT_AUTH_ERROR);
+            throw new BusinessException(ResCodeEnum.NO_AUTH_ERROR);
         }
 
         /**
@@ -242,7 +242,7 @@ public class AuthInterceptor {
          * 普通用户访问普通接口会直接放行（第44行）
          */
         if (UserRoleEnum.ADMIN.equals(mustUserRoleEnum) && !UserRoleEnum.ADMIN.getRoleValue().equals(loginUser.getUserRole())) {
-            throw new BusinessException(ResCodeEnum.NOT_AUTH_ERROR);
+            throw new BusinessException(ResCodeEnum.NO_AUTH_ERROR);
         }
 
         //通过权限校验，放行 → 执行原方法
